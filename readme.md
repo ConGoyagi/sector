@@ -28,6 +28,27 @@ This integration connects Home Assistant with the Sector Alarm system allowing m
 
 On alarm installations which are not wired, make sure you take the binary sensor `Online` into account to ensure the alarm state is a trusted state. The entity for alarm panel can only be armed/disarmed on alarms which are online.
 
+### Reported Alarm State sensor
+
+The read-only **Reported Alarm State** sensor exposes the last alarm state returned
+by Sector's API, even when the panel reports `IsOnline: false`. Its states are
+`disarmed`, `armed_home`, and `armed_away`; missing or unsupported status codes
+produce an unknown state. It uses the existing panel-status polling and does not
+change the alarm control panel's offline safeguards.
+
+The attributes `is_online`, `status_time_utc`, and `last_successful_update`
+distinguish reported connectivity, the API's state-change timestamp (when
+provided), and the last successful fetch. A successful fetch does not guarantee
+fresh data from the physical panel. The sensor follows the integration's existing
+availability thresholds, which retain the last value through transient failures.
+An old state-change timestamp alone does not make it unavailable.
+
+For camera automations, trigger on explicit states and leave camera mode unchanged
+when the sensor is unknown or unavailable. Normal polling introduces up to about
+one minute of delay, plus API propagation time; throttling or failed requests can
+extend that delay. Confirm that the sensor follows normal arm/disarm operations
+on your installation before relying on it.
+
 ## Installation ##
 
 **Minimum Required Home Assistant version:** 2026.1.0

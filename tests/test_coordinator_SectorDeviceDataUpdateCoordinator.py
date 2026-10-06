@@ -5,6 +5,7 @@ import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
 )
@@ -23,10 +24,42 @@ from custom_components.sector.client import ApiError, APIResponse, LoginError
 from custom_components.sector.coordinator import (
     DeviceRegistry,
     SectorDeviceDataUpdateCoordinator,
+    _DeviceProcessor,
 )
 from custom_components.sector.endpoints import DataEndpointType
 
 _PANEL_ID = "1234"
+
+
+@pytest.mark.parametrize("timestamp", ["2026-10-06T05:41:08Z", None])
+def test_process_panel_preserves_state_timestamp(hass, timestamp):
+    processor = _DeviceProcessor(hass, _PANEL_ID, "panel-coordinator")
+    payload: PanelStatus = {"IsOnline": False, "Status": 3}
+    if timestamp is not None:
+        payload["StatusTimeUtc"] = timestamp
+    processed_at = dt_util.utcnow()
+    devices = {}
+    panel_info: PanelInfo = {
+        "PanelId": _PANEL_ID,
+        "PanelCodeLength": 4,
+        "QuickArmEnabled": False,
+        "CanPartialArm": True,
+        "Locks": [],
+        "Temperatures": [],
+        "Smartplugs": [],
+        "Capabilities": [],
+    }
+
+    processor.process_alarm_panel(
+        DataEndpointType.PANEL_STATUS, panel_info, payload, processed_at, devices
+    )
+
+    entity = devices[_PANEL_ID]["entities"]["Alarm panel"]
+    assert entity["status_time_utc"] == timestamp
+    assert entity["last_updated"] == processed_at.isoformat()
+    assert entity["sensors"] == {"online": False, "alarm_status": 3}
+
+
 _DEVICE_COORDINATOR_NAME = "device-coordinator"
 _MANDATORY_ENDPOINTS = {DataEndpointType.PANEL_STATUS}
 _OPTIONAL_ENDPOINTS = {

@@ -1,4 +1,16 @@
 {
+    "entity": {
+        "sensor": {
+            "reported_alarm_state": {
+                "name": "Rapporterat larmläge",
+                "state": {
+                    "disarmed": "Avlarmat",
+                    "armed_home": "Skalskydd",
+                    "armed_away": "Bortalarmat"
+                }
+            }
+        }
+    },
     "config": {
         "abort": {
             "already_configured": "Kontot är redan konfigurerat",

@@ -1,0 +1,105 @@
+@baseUrl = https://mypagesapi.sectoralarm.net
+@email = {{$processEnv SECTOR_EMAIL}}
+@password = {{$processEnv SECTOR_PASSWORD}}
+@panelId = 02267370
+@userAgent = SectorAlarm/387 CFNetwork/1206 Darwin/20.1.0
+
+### Authenticate and capture the token from the response
+# Set SECTOR_EMAIL and SECTOR_PASSWORD in the environment used to launch VS Code.
+# Do not put your real credentials or token in this file.
+# @name login
+POST {{baseUrl}}/api/Login/Login
+Content-Type: application/json
+User-Agent: {{userAgent}}
+
+{
+  "UserId": "{{email}}",
+  "Password": "{{password}}"
+}
+
+### List panels for the account
+GET {{baseUrl}}/api/account/GetPanelList
+Authorization: {{login.response.body.$.AuthorizationToken}}
+Accept: application/json
+User-Agent: {{userAgent}}
+
+### Get panel capabilities and device information
+# Replace @panelId above with a PanelId returned by GetPanelList.
+GET {{baseUrl}}/api/Panel/GetPanel?panelId={{panelId}}
+Authorization: {{login.response.body.$.AuthorizationToken}}
+Accept: application/json
+User-Agent: {{userAgent}}
+
+### Get alarm panel status
+GET {{baseUrl}}/api/panel/GetPanelStatus?panelId={{panelId}}
+Authorization: {{login.response.body.$.AuthorizationToken}}
+Accept: application/json
+User-Agent: {{userAgent}}
+
+### Get smart lock status
+GET {{baseUrl}}/api/panel/GetLockStatus?panelId={{panelId}}
+Authorization: {{login.response.body.$.AuthorizationToken}}
+Accept: application/json
+User-Agent: {{userAgent}}
+
+### Get smart plug status
+GET {{baseUrl}}/api/panel/GetSmartplugStatus?panelId={{panelId}}
+Authorization: {{login.response.body.$.AuthorizationToken}}
+Accept: application/json
+User-Agent: {{userAgent}}
+
+### Get legacy temperature data
+GET {{baseUrl}}/api/Panel/GetTemperatures?panelId={{panelId}}
+Authorization: {{login.response.body.$.AuthorizationToken}}
+Accept: application/json
+User-Agent: {{userAgent}}
+
+### Get door and window sensor data (HouseCheck)
+POST {{baseUrl}}/api/housecheck/doorsandwindows
+Authorization: {{login.response.body.$.AuthorizationToken}}
+Content-Type: application/json
+Accept: application/json
+User-Agent: {{userAgent}}
+
+{
+  "PanelId": "{{panelId}}"
+}
+
+### Get humidity sensor data (HouseCheck)
+GET {{baseUrl}}/api/housecheck/panels/{{panelId}}/humidity
+Authorization: {{login.response.body.$.AuthorizationToken}}
+Accept: application/json
+User-Agent: {{userAgent}}
+
+### Get temperature sensor data (HouseCheck)
+POST {{baseUrl}}/api/v2/housecheck/temperatures
+Authorization: {{login.response.body.$.AuthorizationToken}}
+Content-Type: application/json
+Accept: application/json
+User-Agent: {{userAgent}}
+
+{
+  "PanelId": "{{panelId}}"
+}
+
+### Get smoke detector data (HouseCheck)
+POST {{baseUrl}}/api/v2/housecheck/smokedetectors
+Authorization: {{login.response.body.$.AuthorizationToken}}
+Content-Type: application/json
+Accept: application/json
+User-Agent: {{userAgent}}
+
+{
+  "PanelId": "{{panelId}}"
+}
+
+### Get leakage detector data (HouseCheck)
+POST {{baseUrl}}/api/v2/housecheck/leakagedetectors
+Authorization: {{login.response.body.$.AuthorizationToken}}
+Content-Type: application/json
+Accept: application/json
+User-Agent: {{userAgent}}
+
+{
+  "PanelId": "{{panelId}}"
+}

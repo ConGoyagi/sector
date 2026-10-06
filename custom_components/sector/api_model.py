@@ -1,9 +1,10 @@
-from typing import Optional, TypedDict
+from typing import NotRequired, Optional, TypedDict
 
 
 class PanelStatus(TypedDict):
     IsOnline: bool
     Status: int
+    StatusTimeUtc: NotRequired[str | None]
 
 
 class Lock(TypedDict):

@@ -22,7 +22,11 @@ from homeassistant.exceptions import (
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.sector.client import ApiError, AuthenticationError, LoginError
-from custom_components.sector.const import CONF_IGNORE_QUICK_ARM, RUNTIME_DATA
+from custom_components.sector.const import (
+    ALARM_STATE_TO_HA_STATE,
+    CONF_IGNORE_QUICK_ARM,
+    RUNTIME_DATA,
+)
 
 from .coordinator import (
     DeviceRegistry,
@@ -32,14 +36,6 @@ from .coordinator import (
 from .entity import SectorAlarmBaseEntity
 
 _LOGGER = logging.getLogger(__name__)
-
-ALARM_STATE_TO_HA_STATE = {
-    3: AlarmControlPanelState.ARMED_AWAY,
-    2: AlarmControlPanelState.ARMED_HOME,
-    1: AlarmControlPanelState.DISARMED,
-    0: None,
-}
-
 
 async def async_setup_entry(
     hass: HomeAssistant,

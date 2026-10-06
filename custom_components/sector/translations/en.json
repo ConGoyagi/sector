@@ -1,4 +1,16 @@
 {
+    "entity": {
+        "sensor": {
+            "reported_alarm_state": {
+                "name": "Reported Alarm State",
+                "state": {
+                    "disarmed": "Disarmed",
+                    "armed_home": "Armed home",
+                    "armed_away": "Armed away"
+                }
+            }
+        }
+    },
     "config": {
         "abort": {
             "already_configured": "Account is already configured",
