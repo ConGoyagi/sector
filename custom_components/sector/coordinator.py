@@ -452,6 +452,7 @@ class _DeviceProcessor:
             "panel_code_length": panel_info.get("PanelCodeLength", 0),
             "panel_quick_arm": panel_info.get("QuickArmEnabled", False),
             "panel_partial_arm": panel_info.get("CanPartialArm", False),
+            "status_time_utc": panel_status_data.get("StatusTimeUtc"),
             "model": f"{endpoint_type.value}",
             "coordinator_name": self._coordinator_name,
             "last_updated": proccess_time.isoformat(),

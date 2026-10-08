@@ -15,7 +15,7 @@ from homeassistant.const import PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.sector.const import RUNTIME_DATA
+from custom_components.sector.const import ALARM_STATE_TO_HA_STATE, RUNTIME_DATA
 
 from .coordinator import (
     DeviceRegistry,
@@ -23,8 +23,16 @@ from .coordinator import (
     SectorDeviceDataUpdateCoordinator,
 )
 from .entity import SectorAlarmBaseEntity
+from .endpoints import DataEndpointType
 
 _LOGGER = logging.getLogger(__name__)
+
+REPORTED_ALARM_STATE = SensorEntityDescription(
+    key="reported_alarm_state",
+    translation_key="reported_alarm_state",
+    device_class=SensorDeviceClass.ENUM,
+    options=["disarmed", "armed_home", "armed_away"],
+)
 
 SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
@@ -52,7 +60,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Sector Alarm sensors."""
-    entities: list[SectorAlarmSensor] = []
+    entities: list[SectorAlarmSensor | SectorReportedAlarmStateSensor] = []
     coordinators: list[SectorDeviceDataUpdateCoordinator] = entry.runtime_data[
         RUNTIME_DATA.DEVICE_COORDINATORS
     ]
@@ -68,6 +76,16 @@ async def async_setup_entry(
             device_name: str = device["name"]
             device_model = device["model"]
             for entity_model, entity in device.get("entities", {}).items():
+                if entity_model == DataEndpointType.PANEL_STATUS.value:
+                    entities.append(
+                        SectorReportedAlarmStateSensor(
+                            coordinator,
+                            serial_no,
+                            device_name,
+                            device_model,
+                            entity_model,
+                        )
+                    )
                 sensors = entity.get("sensors", {})
 
                 for description in SENSOR_TYPES:
@@ -119,3 +137,41 @@ class SectorAlarmSensor(
         entity = self.entity_data or {}
         sensors: dict[str, Any] = entity.get("sensors", {})
         return sensors.get(self.entity_description.key)
+
+
+class SectorReportedAlarmStateSensor(
+    SectorAlarmBaseEntity[SectorDeviceDataUpdateCoordinator], SensorEntity
+):
+    """Expose Sector's reported state independently of panel connectivity."""
+
+    entity_description = REPORTED_ALARM_STATE
+
+    def __init__(
+        self,
+        coordinator: SectorDeviceDataUpdateCoordinator,
+        serial_no: str,
+        device_name: str,
+        device_model: str,
+        entity_model: str,
+    ) -> None:
+        super().__init__(
+            coordinator, serial_no, device_name, device_model, entity_model
+        )
+        self._attr_unique_id = f"{serial_no}_{self.entity_description.key}"
+
+    @property
+    def native_value(self) -> str | None:
+        entity = self.entity_data or {}
+        status = entity.get("sensors", {}).get("alarm_status")
+        state = ALARM_STATE_TO_HA_STATE.get(status)
+        return state.value if state is not None else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        entity = self.entity_data or {}
+        return {
+            **super().extra_state_attributes,
+            "is_online": entity.get("sensors", {}).get("online"),
+            "status_time_utc": entity.get("status_time_utc"),
+            "last_successful_update": entity.get("last_updated"),
+        }
